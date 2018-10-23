@@ -6,6 +6,8 @@ let wartosc_dokladna x p = (( x -. p *. x /. 100., x +. p *. x /. 100.):wartosc)
 let wartosc_od_do x y = ((x, y):wartosc);;
 let wartosc_dokladna x = ((x, x):wartosc);;
 
+(* Funkcja pomocnicza zwracajaca minimum z 4 wartosci *)
+let minimum a b c d = min a (min b (min c d));;
 (* SELEKTORY *)
 
 let in_wartosc (x:wartosc) (y:float) = 
@@ -43,4 +45,6 @@ let plus (a:wartosc) (b:wartosc) =
 
 let minus (a:wartosc) (b:wartosc) = plus a (-. snd b, -. fst b);;
 
-
+let razy (a:wartosc) (b:wartosc) =
+    if fst a < snd a then
+	if fst b < snd b then 
