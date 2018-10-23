@@ -13,26 +13,30 @@ let maksimum a b c d = max a (max b (max c d));;
 
 let rec scal (a:wartosc) (b:wartosc) =
         if fst a > snd a (* przypadek zbioru z luka *)
-        then if fst b > snd b (*dwa zbiory z luka*)
-            then if (snd b >= fst a || snd a >= fst b) (*czy zbiory maja rozlaczne luki *)
-                then ((neg_infinity, infinity):wartosc)
-                else ((max (snd a) (snd b) , min (fst a) (fst b)):wartosc)
-            else if snd b = infinity (* jeden zbior z luka i jeden od poewnego punktu do neg_infinity albo infinity *)
-                then if fst b <= snd a
+            then if fst b > snd b (*dwa zbiory z luka*)
+                then if (snd b >= fst a || snd a >= fst b) (*czy zbiory maja rozlaczne luki *)
                     then ((neg_infinity, infinity):wartosc)
-                    else (snd a, min (fst a) (fst b))
-                else 
-        else if (fst a = neg_infinity && snd a = infinity) || (fst b = neg_infinity && snd b = infinity)
-            then ((neg_infinity, infinity):wartosc)
-            else if snd a = infinity
-                then if snd b = infinity
-                    then ((min (fst a) (fst b), infinity):wartosc)
-                    else if snd b >= fst a
+                    else ((max (snd a) (snd b) , min (fst a) (fst b)):wartosc)
+                else if snd b = infinity (* jeden zbior z luka i jeden od pewnego punktu do neg_infinity albo infinity *)
+                    then if fst b <= snd a
                         then ((neg_infinity, infinity):wartosc)
-                        else ((fst a, snd b):wartosc)
-                else if fst b = neg_infinity
-                    then ((neg_infinity, max (snd a) (snd b)):wartosc)
-                    else scal b a
+                        else (snd a, min (fst a) (fst b))
+                    else if snd b >= fst a (* analog do 3 linijki w gore *)
+                        then ((neg_infinity, infinity):wartosc)
+                        else (fst a, max (snd a) (snd b))
+            else if fst b > snd b
+                then scal b a (* jezeli b jest z luka, to ponowne wywolanie funkcji "odpali" pierwszego if'a*)
+                else if (fst a = neg_infinity && snd a = infinity) || (fst b = neg_infinity && snd b = infinity) (* żaden ze zbiorow nie ma luki*)
+                    then ((neg_infinity, infinity):wartosc)
+                    else if snd a = infinity
+                        then if snd b = infinity
+                            then ((min (fst a) (fst b), infinity):wartosc)
+                            else if snd b >= fst a
+                                then ((neg_infinity, infinity):wartosc)
+                                else ((fst a, snd b):wartosc)
+                        else if fst b = neg_infinity
+                            then ((neg_infinity, max (snd a) (snd b)):wartosc)
+                            else scal b a
 ;;
 
 (* SELEKTORY *)
