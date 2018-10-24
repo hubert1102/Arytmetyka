@@ -7,8 +7,19 @@ let wartosc_od_do x y = ((x, y):wartosc);;
 let wartosc_dokladna x = ((x, x):wartosc);;
 
 (* Funkcje pomocnicze zwracajaca minimum lub maksimum z 4 wartosci *)
-let minimum a b c d = min a (min b (min c d));;
-let maksimum a b c d = max a (max b (max c d));;
+let is_nan x = compare x nan = 0;;
+let minn a b =
+    if is_nan a then b
+    else if is_nan b then a
+    else min a b
+;;
+let maxx a b =
+    if is_nan a then b
+    else if is_nan b then a
+    else max a b
+;;
+let minimum a b c d = minn a (minn b (minn c d));;
+let maksimum a b c d = maxx a (maxx b (maxx c d));;
 (* Funkcja pomocnicza wyznaczajaca dla zbiorow A B zbior A U B, A i B sa od neg_infinity albo do infinity *)
 
 let rec scal (a:wartosc) (b:wartosc) =
@@ -80,13 +91,16 @@ let plus (a:wartosc) (b:wartosc) =
 let minus (a:wartosc) (b:wartosc) = plus a (-. snd b, -. fst b);;
 
 let rec razy (a:wartosc) (b:wartosc) =
-        if fst a <= snd a 
-            then if fst b <= snd b 
-                then ((minimum (fst a *. fst b) (fst a *. snd b) (snd a *. fst b) (snd a *. snd b), maksimum (fst a *. fst b) (fst a *. snd b) (snd a *. fst b) (snd a *. snd b)):wartosc)
-                else if in_wartosc a 0.
-                    then ((neg_infinity, infinity):wartosc)
-		    else scal (razy a ((neg_infinity, snd b):wartosc)) (razy a ((fst b, infinity):wartosc))
-	    else if fst b <= snd b
-		then razy b a
-		else scal (scal (razy ((neg_infinity, snd a):wartosc) ((neg_infinity, snd b):wartosc)) (razy ((neg_infinity, snd a):wartosc) (fst b, infinity):wartosc)) (scal (razy ((fst a, infinity):wartosc) ((neg_infinity, snd b):wartosc)) (razy ((fst a, infinity):wartosc) (fst b, infinity):wartosc))
+        if (is_nan (fst a) || is_nan (fst b)) then ((nan, nan):wartosc) 
+        else if (a = wartosc_dokladna 0. || b = wartosc_dokladna 0.) 
+            then wartosc_dokladna 0.
+            else if fst a <= snd a 
+                then if fst b <= snd b 
+                    then ((minimum (fst a *. fst b) (fst a *. snd b) (snd a *. fst b) (snd a *. snd b), maksimum (fst a *. fst b) (fst a *. snd b) (snd a *. fst b) (snd a *. snd b)):wartosc)
+                    else if in_wartosc a 0.
+                        then ((neg_infinity, infinity):wartosc)
+                else scal (razy a ((neg_infinity, snd b):wartosc)) (razy a ((fst b, infinity):wartosc))
+            else if fst b <= snd b
+            then razy b a
+            else scal (scal (razy ((neg_infinity, snd a):wartosc) ((neg_infinity, snd b):wartosc)) (razy ((neg_infinity, snd a):wartosc) (fst b, infinity):wartosc)) (scal (razy ((fst a, infinity):wartosc) ((neg_infinity, snd b):wartosc)) (razy ((fst a, infinity):wartosc) (fst b, infinity):wartosc))
 ;;
