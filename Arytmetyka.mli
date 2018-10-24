@@ -79,10 +79,14 @@ let plus (a:wartosc) (b:wartosc) =
 
 let minus (a:wartosc) (b:wartosc) = plus a (-. snd b, -. fst b);;
 
-let razy (a:wartosc) (b:wartosc) =
+let rec razy (a:wartosc) (b:wartosc) =
         if fst a <= snd a 
             then if fst b <= snd b 
-                then ((minimum (fst a *. fst b) (fst a *. snd b) (snd a *. fst b) (snd a * snd b), maksimum (fst a *. fst b) (fst a *. snd b) (snd a *. fst b) (snd a *. snd b)):wartosc)
-                else if in_wartosc a 0 
+                then ((minimum (fst a *. fst b) (fst a *. snd b) (snd a *. fst b) (snd a *. snd b), maksimum (fst a *. fst b) (fst a *. snd b) (snd a *. fst b) (snd a *. snd b)):wartosc)
+                else if in_wartosc a 0.
                     then ((neg_infinity, infinity):wartosc)
-                    else 
+		    else scal (razy a ((neg_infinity, snd b):wartosc)) (razy a ((fst b, infinity):wartosc))
+	    else if fst b <= snd b
+		then razy b a
+		else scal (scal (razy ((neg_infinity, snd a):wartosc) ((neg_infinity, snd b):wartosc)) (razy ((neg_infinity, snd a):wartosc) (fst b, infinity):wartosc)) (scal (razy ((fst a, infinity):wartosc) ((neg_infinity, snd b):wartosc)) (razy ((fst a, infinity):wartosc) (fst b, infinity):wartosc))
+;;
