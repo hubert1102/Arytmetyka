@@ -104,3 +104,20 @@ let rec razy (a:wartosc) (b:wartosc) =
             then razy b a
             else scal (scal (razy ((neg_infinity, snd a):wartosc) ((neg_infinity, snd b):wartosc)) (razy ((neg_infinity, snd a):wartosc) (fst b, infinity):wartosc)) (scal (razy ((fst a, infinity):wartosc) ((neg_infinity, snd b):wartosc)) (razy ((fst a, infinity):wartosc) (fst b, infinity):wartosc))
 ;;
+
+let rec podzielic (b:wartosc) (a:wartosc) = (* dziele zbior b na a*)
+    if is_nan (fst a) || is_nan (fst b) 
+        then ((nan, nan):wartosc)
+        else if (a = wartosc_dokladna 0.) || (b = wartosc_dokladna 0.) 
+            then ((nan, nan):wartosc)
+            else if fst a <= snd a
+                then if fst a = 0.
+                    then razy (((1. /. (snd a)),  infinity):wartosc) b
+                    else if snd a = 0.
+                        then razy (((1. /. (fst a)), neg_infinity):wartosc) b
+                        else if (in_wartosc a 0.) 
+                            then scal ((podzielic b ((fst a, 0.):wartosc))) (podzielic b ((0. , snd a):wartosc))
+                            else razy b ((min (1. /. (fst a)) (1. /. (snd a))), (max (1. /. (fst a)) (1. /. (snd a))):wartosc)
+                else scal (podzielic b ((neg_infinity, fst a):wartosc)) (podzielic b (( snd a, infinity):wartosc))
+;;
+         
