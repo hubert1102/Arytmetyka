@@ -2,7 +2,7 @@
 
 type wartosc = float * float;;
 
-let wartosc_dokladna x p = (( x -. p *. x /. 100., x +. p *. x /. 100.):wartosc);;
+let wartosc_dokladnosc x p = (( x -. p *. x /. 100., x +. p *. x /. 100.):wartosc);;
 let wartosc_od_do x y = ((x, y):wartosc);;
 let wartosc_dokladna x = ((x, x):wartosc);;
 
@@ -108,7 +108,7 @@ let rec razy (a:wartosc) (b:wartosc) =
 let rec podzielic (b:wartosc) (a:wartosc) = (* dziele zbior b na a*)
     if is_nan (fst a) || is_nan (fst b) 
         then ((nan, nan):wartosc)
-        else if (a = wartosc_dokladna 0.) || (b = wartosc_dokladna 0.) 
+        else if a = wartosc_dokladna 0. 
             then ((nan, nan):wartosc)
             else if fst a <= snd a
                 then if fst a = 0.
@@ -118,6 +118,11 @@ let rec podzielic (b:wartosc) (a:wartosc) = (* dziele zbior b na a*)
                         else if (in_wartosc a 0.) 
                             then scal ((podzielic b ((fst a, 0.):wartosc))) (podzielic b ((0. , snd a):wartosc))
                             else razy b ((min (1. /. (fst a)) (1. /. (snd a))), (max (1. /. (fst a)) (1. /. (snd a))):wartosc)
-                else scal (podzielic b ((neg_infinity, fst a):wartosc)) (podzielic b (( snd a, infinity):wartosc))
+                else if snd a = 0. 
+		    then razy b ((neg_infinity, 1. /. (fst a)):wartosc)
+		    else if snd a > 0.
+			then razy b (((1. /. snd a), (1. /. fst a)):wartosc)
+			else if fst a >= 0.
+			    then razy b (((1. /. snd a), (1. /. fst a)):wartosc)
+			    else razy b (((1. /. snd a), (1. /. fst a)):wartosc)
 ;;
-         
