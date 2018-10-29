@@ -1,7 +1,7 @@
 (* KONSTRUKTORY *)
 
 type wartosc = float * float;;
-
+(*W zadaniu jedynymi mozliwymi do otrzymania zbiorami jest zbior spojny lub zbior od neg_infinity do infinity z "luka", dlatego spojny przedzial (a, b) oznaczam przez uparzadkawana pare a<=b, natomiast zbior z luka oznaczam przez (b, a), gdzie a<b i oznacza to zbior (neg_infinity, b)U(a, infinity) *)
 let wartosc_dokladnosc x p = (( x -. p *. (abs_float x) /. 100., x +. p *. (abs_float x) /. 100.):wartosc);;
 let wartosc_od_do x y = ((x, y):wartosc);;
 let wartosc_dokladna x = ((x, x):wartosc);;
@@ -20,42 +20,20 @@ let maxx a b =
 ;;
 let minimum a b c d = minn a (minn b (minn c d));;
 let maksimum a b c d = maxx a (maxx b (maxx c d));;
-(* Funkcja pomocnicza wyznaczajaca dla zbiorow A B zbior A U B, A i B sa od neg_infinity albo do infinity *)
+(* Funkcja pomocnicza wyznaczajaca dla zbiorow A B zbior A U B, A i B sa albo zbiorami z luka albo ktorys z ich koncow jest w neg_infinity albo w infinity *)
 
 let rec scal (a:wartosc) (b:wartosc) =
-        if (fst a = neg_infinity && snd b = infinity)
-            then if snd a >= fst b
+        if (fst a = neg_infinity && snd b = infinity) (* a = (neg_infinity, x) b = (y, infinity), najpierw rozpatruje przypadki gdy a nie ma luki *)
+            then if snd a >= fst b (* przedzialy albo sie pokrywaja albo zostawiaja luke *)
                 then (neg_infinity, infinity)
                 else (fst b, snd a)
-            else if (fst b = neg_infinity && snd a = infinity)
-                then if snd b >= fst a
-                    then (infinity, neg_infinity)
-                    else (fst a, snd b)
-                else if fst a > snd a (* przypadek zbioru z luka *)
-                    then if fst b > snd b (*dwa zbiory z luka*)
-                        then if (snd b >= fst a || snd a >= fst b) (*czy zbiory maja rozlaczne luki *)
-                            then ((neg_infinity, infinity):wartosc)
-                            else (min (fst a) (fst b), (max (snd a) (snd b)):wartosc)
-                        else if snd b = infinity (* jeden zbior z luka i jeden od pewnego punktu do neg_infinity albo infinity *)
-                            then if fst b <= snd a
-                                then ((neg_infinity, infinity):wartosc)
-                                else (snd a, min (fst a) (fst b))
-                            else if snd b >= fst a (* analog do 3 linijki w gore *)
-                                then ((neg_infinity, infinity):wartosc)
-                                else (fst a, max (snd a) (snd b))
-                    else if fst b > snd b
-                        then scal b a (* jezeli b jest z luka, to ponowne wywolanie funkcji "odpali" pierwszego if'a*)
-                        else if (fst a = neg_infinity && snd a = infinity) || (fst b = neg_infinity && snd b = infinity) (* żaden ze zbiorow nie ma luki*)
-                            then ((neg_infinity, infinity):wartosc)
-                            else if snd a = infinity
-                                then if snd b = infinity
-                                    then ((min (fst a) (fst b), infinity):wartosc)
-                                    else if snd b >= fst a
-                                        then ((neg_infinity, infinity):wartosc)
-                                        else ((fst a, snd b):wartosc)
-                                else if fst b = neg_infinity
-                                    then ((neg_infinity, max (snd a) (snd b)):wartosc)
-                                    else scal b a
+            else if (fst b = neg_infinity && snd a = infinity) (*if analog do 1. ifa tylko w odwrotnej kolejnosci, wystarczy odpalic scal b a *)
+                then scal b a
+                else if snd a = infinity && snd b = infinity (*oba przedzialy do infinity *)
+                    then (min (fst a) (fst b), infinity)
+                    else if fst a = neg_infinity && fst b = neg_infinity (*oba przedzialy od neg_infinity *)
+                        then (neg_infinity, max(snd a, snd b))
+                        else scal (scal b (neg_infinity, snd a)) (fst a, infinity) (* a musi miec luke, "rozbieram" a na dwa przedzialy i scalam z b, zamieniam b kolejnoscia z a na wypadek gdy b ma luke, to tez bedzie rozebrany*)
 ;;
 
 (* SELEKTORY *)
