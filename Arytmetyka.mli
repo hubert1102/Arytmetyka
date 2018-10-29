@@ -32,12 +32,12 @@ let rec scal (a:wartosc) (b:wartosc) =
                 else if snd a = infinity && snd b = infinity (*oba przedzialy do infinity *)
                     then (min (fst a) (fst b), infinity)
                     else if fst a = neg_infinity && fst b = neg_infinity (*oba przedzialy od neg_infinity *)
-                        then (neg_infinity, max(snd a, snd b))
+                        then (neg_infinity, max (snd a) (snd b))
                         else if fst b = neg_infinity  (* a ma luke, rozpatruje jakie moze byc b *)
                             then scal (scal b (neg_infinity, snd a)) (fst a, infinity) (*b od neg_infinity *)
-                            else if snd b = infinity (*b jest fo infinity*)
+                            else if snd b = infinity (*b jest do infinity*)
                                 then scal (neg_infinity, snd a) (scal b (fst a, infinity))
-                                else scal (scal (neg_infinity, snd a) (neg_infinity, snd b)) (scal (fst a, infinity) (fst b, infinity))
+                                else scal (scal (neg_infinity, snd a) (neg_infinity, snd b)) (scal (fst a, infinity) (fst b, infinity)) (*b jest z luka*)
 ;;
 
 (* SELEKTORY *)
@@ -73,55 +73,49 @@ let sr_wartosc (x:wartosc) =
 
 (* MODYFIKATORY *)
 
-let plus (a:wartosc) (b:wartosc) =
-        if fst a > snd a 
-            then if fst b > snd b 
-                then ((neg_infinity, infinity):wartosc) (* suma dwoch zbiorow z "luka" sumuja sie do zbioru od infinity do neg_infinity *)
-                else if (fst a -. snd a <= snd b -. fst b) 
-                    then ((neg_infinity, infinity):wartosc) (* jak luka w a jest co najwyjzej wielkosci prz b to uda nam sie ja "zalatac" *)
-                    else ((fst a +. fst b, snd a +. snd b):wartosc) (* latamy ile sie da *)
-            else if fst b > snd b 
-                then if (fst b -. snd b <= snd a -. fst a) (* analog do 5 linii w gore *)
-                    then ((neg_infinity, infinity):wartosc)
-                    else  ((fst a +. fst b, snd a +. snd b):wartosc)
-                else  ((fst a +. fst b, snd a +. snd b):wartosc) (* dwa skonczone przedzialy *)
+let rec plus (a:wartosc) (b:wartosc) =
+        if fst a > snd a (* a ma luke *)
+            then if fst b > snd b  (*b ma luke *)
+                then (neg_infinity, infinity) (* suma dwoch zbiorow z "luka" zawsze sumuja sie do zbioru od infinity do neg_infinity *)
+                else if (fst a -. snd a <= snd b -. fst b) (*a ma luke, b nie, patrzymy czy da sie luke "zalatac" -> przedzial b musi byc wielkosci co najmniej luki a *)
+                    then (neg_infinity, infinity)
+                    else (fst a +. fst b, snd a +. snd b) (* latamy ile sie da *)
+            else if fst b > snd b (* b ma luke, a nie *)
+                then plus b a (*rozpatrzylismy juz przypadek, gdy pierwszy zbior ma luke*)
+                else  (fst a +. fst b, snd a +. snd b) (* dwa zbiory bez luki *)
 ;;
-
-let minus (a:wartosc) (b:wartosc) = plus a (-. snd b, -. fst b);;
-
-let rec razy (a:wartosc) (b:wartosc) =
-        if (is_nan (fst a) || is_nan (fst b)) then ((nan, nan):wartosc) 
-        else if (a = wartosc_dokladna 0. || b = wartosc_dokladna 0.) 
+(* plus dziala dla ktoregos przedzialu pustego (nan, nan), bo zawsze dojdziemy do sumowania krancow przedzialow, a nan+cos=nan *)
+let minus a b = plus a (-. snd b, -. fst b);;
+(* odejmowanie przedzialow to dodawanie przedzialu przeciwnego *)
+let rec razy a b =
+        if (is_nan (fst a) || is_nan (fst b)) then (nan, nan) (*sprawdzamy nany*)
+        else if (a = wartosc_dokladna 0. || b = wartosc_dokladna 0.) (*ktorys przedzial to (0,0) to wyjdzie zawsze (0,0), pomimo, ze o.*.infinity = nan, to 0 i tak zawsze bedzie zawarte w przedziale wynikowym *)
             then wartosc_dokladna 0.
-            else if fst a <= snd a 
-                then if fst b <= snd b 
-                    then ((minimum (fst a *. fst b) (fst a *. snd b) (snd a *. fst b) (snd a *. snd b), maksimum (fst a *. fst b) (fst a *. snd b) (snd a *. fst b) (snd a *. snd b)):wartosc)
-                    else if in_wartosc a 0.
-                        then ((neg_infinity, infinity):wartosc)
-                else scal (razy ((neg_infinity, snd b):wartosc) a) (razy ((fst b, infinity):wartosc) a)
-            else if fst b <= snd b
+            else if fst a <= snd a  (*a nie ma luki *)
+                then if fst b <= snd b (*b nie ma luki*)
+                    then (minimum (fst a *. fst b) (fst a *. snd b) (snd a *. fst b) (snd a *. snd b), maksimum (fst a *. fst b) (fst a *. snd b) (snd a *. fst b) (snd a *. snd b))
+                    else if in_wartosc a 0. (*a nie ma luki, b ma, jak a zawiera 0, to moge uzyskac kazda liczbe*)
+                        then (neg_infinity, infinity)
+                else scal (razy (neg_infinity, snd b) a) (razy (fst b, infinity) a) (*a ma luke*)
+            else if fst b <= snd b (*b nie ma luki, dal tego przypadku rozwazylismy przypadek odwrotny, razy b a zwroci poprawny wynik*)
             then razy b a
-            else scal (scal (razy ((neg_infinity, snd a):wartosc) ((neg_infinity, snd b):wartosc)) (razy ((neg_infinity, snd a):wartosc) (fst b, infinity):wartosc)) (scal (razy ((fst a, infinity):wartosc) ((neg_infinity, snd b):wartosc)) (razy ((fst a, infinity):wartosc) (fst b, infinity):wartosc))
+            else scal (scal (razy (neg_infinity, snd a) (neg_infinity, snd b)) (razy (neg_infinity, snd a) (fst b, infinity))) (scal (razy (fst a, infinity) (neg_infinity, snd b)) (razy (fst a, infinity) (fst b, infinity))) (* rozbijam zbiory z luka na dwa zbiory bez luki, mnoze je ze soba i wyniki scalam *)
 ;;
 
-let rec podzielic (b:wartosc) (a:wartosc) = (* dziele zbior b na a*)
-    if is_nan (fst a) || is_nan (fst b) 
-        then ((nan, nan):wartosc)
-        else if a = wartosc_dokladna 0. 
-            then ((nan, nan):wartosc)
-            else if fst a <= snd a
-                then if fst a = 0.
-                    then razy (((1. /. (snd a)),  infinity):wartosc) b
-                    else if snd a = 0.
-                        then razy (neg_infinity, (1. /. (fst a))) b
-                        else if (in_wartosc a 0.) 
-                            then scal ((podzielic b ((fst a, 0.):wartosc))) (podzielic b ((0. , snd a):wartosc))
-                            else razy b ((min (1. /. (fst a)) (1. /. (snd a))), (max (1. /. (fst a)) (1. /. (snd a))):wartosc)
-                else if snd a = 0. 
-                    then razy b ((neg_infinity, 1. /. (fst a)):wartosc)
-                    else if snd a > 0.
-                        then razy b (((1. /. snd a), (1. /. fst a)):wartosc)
-                        else if fst a >= 0.
-                            then razy b (((1. /. snd a), (1. /. fst a)):wartosc)
-                            else razy b (((1. /. snd a), (1. /. fst a)):wartosc)
+let rec podzielic a b = (* dziele zbior a na b*)
+    if is_nan (fst b) || is_nan (fst a) (*sprawdzam nany*)
+        then (nan, nan)
+        else if b = wartosc_dokladna 0. 
+            then (nan, nan) (*nie dzielimy przez 0*)
+            else if fst b <= snd b (*b jest bez luki *)
+                then if fst b = 0. (* b zaczyna sie od zera, nie zawiera wartosci ujemnych*)
+                    then razy ((1. /. (snd b)),  infinity) a (*dzielenie to mnozenie przez odwrotnosc*)
+                    else if snd b = 0. (*przedzal b konczy sie na 0, nie zawiera liczb dodatnich*)
+                        then razy (neg_infinity, (1. /. (fst b))) a (*mnozenie przez odwrotnosc*)
+                        else if (in_wartosc b 0.) (* a zawiera liczby ujemne i dodatnie, scalam wyniki dla dzielenia przez przedzialy (fst a, 0) i (0, snd a)*)
+                            then scal ((podzielic a (fst b, 0.))) (podzielic a (0. , snd b))
+                            else razy a (min (1. /. (fst b)) (1. /. (snd b)), max (1. /. (fst b)) (1. /. (snd b))) (*mnoze przez odwrotnosc*)
+                else if snd b = 0. (*b jest z luka, luka zaczyna sie na 0, mnozne przez odwrotnosc, if potrzebny bo przedzial jest do 0. a nie -0., nie otrzymamy neg_infinity*)
+                    then razy a (neg_infinity, 1. /. (fst b))
+                    else razy a ((1. /. snd b), (1. /. fst b)) (*w pozostalych przypadkach bezpiecznie moge mnozyc przez odwrotnosc*)
 ;;
