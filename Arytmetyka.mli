@@ -33,7 +33,11 @@ let rec scal (a:wartosc) (b:wartosc) =
                     then (min (fst a) (fst b), infinity)
                     else if fst a = neg_infinity && fst b = neg_infinity (*oba przedzialy od neg_infinity *)
                         then (neg_infinity, max(snd a, snd b))
-                        else scal (scal b (neg_infinity, snd a)) (fst a, infinity) (* a musi miec luke, "rozbieram" a na dwa przedzialy i scalam z b, zamieniam b kolejnoscia z a na wypadek gdy b ma luke, to tez bedzie rozebrany*)
+                        else if fst b = neg_infinity  (* a ma luke, rozpatruje jakie moze byc b *)
+                            then scal (scal b (neg_infinity, snd a)) (fst a, infinity) (*b od neg_infinity *)
+                            else if snd b = infinity (*b jest fo infinity*)
+                                then scal (neg_infinity, snd a) (scal b (fst a, infinity))
+                                else scal (scal (neg_infinity, snd a) (neg_infinity, snd b)) (scal (fst a, infinity) (fst b, infinity))
 ;;
 
 (* SELEKTORY *)
